@@ -337,15 +337,18 @@ access_raw <- access_raw_tbl %>%
   mutate(Appt.DateYear = TO_DATE(CONTACT_DATE)) %>%
   filter(TO_DATE(date_1,"YYYY-MM-DD HH24:MI:SS") > Appt.DateYear) %>%
   dplyr::select(PAT_ENC_CSN_ID, MRN, DEPARTMENT_NAME, DEPARTMENT_ID, DEPT_SPECIALTY_NAME, SITE, PROV_NAME_WID, PROV_ID, NPI, PRC_NAME, 
-                APPT_LENGTH, APPT_DTTM, APPT_MADE_DTTM, APPT_CANC_DTTM, DERIVED_STATUS_DESC, VISIT_PROV_STAFF_RESOURCE_C, VISIT_GROUP_NUM, VISIT_METHOD, LOS_NAME) %>%
+                APPT_LENGTH, APPT_DTTM, APPT_MADE_DTTM, APPT_CANC_DTTM, DERIVED_STATUS_DESC, VISIT_PROV_STAFF_RESOURCE_C, VISIT_GROUP_NUM, VISIT_METHOD, LOS_NAME, OVERBOOKED_YN, OVERRIDE_YN,
+                Appt.Year, Appt.Month, Appt.DateYear) %>%
   collect() %>%
   mutate(PROV_NAME = trimws(gsub("\\[.*?\\]", "", PROV_NAME_WID)))
 
 ```
 
 
+
 ```{r Import Availability Data, echo = FALSE, warning = FALSE, message = FALSE}
 
+  
 # Process Available Hours ------------------------------------------------------
 avail_hours <- availability_raw_tbl %>%
   mutate(Appt.Year = year(SLOT_DATE),
@@ -357,10 +360,39 @@ avail_hours <- availability_raw_tbl %>%
   mutate(Appt.DateYear = TO_DATE(SLOT_DATE)) %>%
   group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, Appt.Year, Appt.Month, Appt.DateYear, SLOT_BEGIN_TIME, SLOT_LENGTH) %>%
   summarise(avail_min = n()) %>%
-  ungroup() %>%
-  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, Appt.Year, Appt.Month, Appt.DateYear) %>%
-  summarise(avail_min = sum(SLOT_LENGTH)) %>%
+  # ungroup() %>%
+  # group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, Appt.Year, Appt.Month, Appt.DateYear) %>%
+  # summarise(avail_min = sum(SLOT_LENGTH)) %>%
   collect()
+
+
+
+# Filter Scheduling Activitites Applicable to Open Slots Only ------------------
+## Excludes cancellations, rescheduling occurred on unavailable slots (erroroneous)
+avail_hours <- avail_hours %>%
+  mutate(relevant_slot = "Yes")
+
+access_raw_filtered <- left_join(access_raw, avail_hours[,c("DEPARTMENT_ID","PROV_ID", "SLOT_BEGIN_TIME", "relevant_slot")], 
+                                 by = c("DEPARTMENT_ID" = "DEPARTMENT_ID",
+                                        "PROV_ID" = "PROV_ID",
+                                        "APPT_DTTM" = "SLOT_BEGIN_TIME"))
+
+
+## Filter out latest appt status per relevant slot (regular and overbook slots treated separately)
+access_raw_filtered <- access_raw_filtered %>%
+  filter(relevant_slot == "Yes") %>%
+  arrange(DEPARTMENT_ID, PROV_NAME_WID, APPT_DTTM, desc(APPT_MADE_DTTM)) %>%
+  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME_WID, APPT_DTTM, Appt.DateYear, OVERBOOKED_YN) %>%
+  mutate(id = row_number()) %>%
+  filter(id == 1) 
+
+
+# Continue Process Available Hours ----------------------------------------------
+avail_hours <- avail_hours %>%
+  ungroup() %>%
+  mutate(Appt.DateYear = as.Date(Appt.DateYear, "%Y-%m-%d")) %>%
+  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, Appt.Year, Appt.Month, Appt.DateYear) %>%
+  summarise(avail_min = sum(SLOT_LENGTH)) 
 
 
 avail_hours$SITE <- dept_mapping$SITE[match(trim(avail_hours$DEPARTMENT_ID), trim(dept_mapping$DEPARTMENT_ID))]
@@ -371,34 +403,42 @@ avail_hours$VISIT_PROV_STAFF_RESOURCE_C <- access_raw$VISIT_PROV_STAFF_RESOURCE_
 
 
 # Process Scheduled and Arrived Hours ------------------------------------------
-visit_hours <- availability_raw_tbl %>%
-  mutate(Appt.Year = year(SLOT_DATE),
-         Appt.Month = month(SLOT_DATE)) %>%
-  filter(Appt.Year == 2023) %>%
-  filter(TO_DATE(date_1,"YYYY-MM-DD HH24:MI:SS") > TO_DATE(SLOT_DATE)) %>%
-  filter(ORG_OVBK_OPENINGS == 0) %>%
-  filter(is.na(UNAVAILABLE_RSN_C)) %>%
-  mutate(Appt.DateYear = TO_DATE(SLOT_DATE)) %>%
-  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, PAT_ID, PAT_ENC_CSN_ID, Appt.Year, Appt.Month, Appt.DateYear) %>%
-  summarise(total = n()) %>%
-  collect()
-
-visit_hours$DERIVED_STATUS_DESC <- access_raw$DERIVED_STATUS_DESC[match(trim(visit_hours$PAT_ENC_CSN_ID), trim((access_raw$PAT_ENC_CSN_ID)))]
-visit_hours$APPT_LENGTH <- access_raw$APPT_LENGTH[match(visit_hours$PAT_ENC_CSN_ID, access_raw$PAT_ENC_CSN_ID)]
+# visit_hours <- availability_raw_tbl %>%
+#   mutate(Appt.Year = year(SLOT_DATE),
+#          Appt.Month = month(SLOT_DATE)) %>%
+#   filter(Appt.Year == 2023) %>%
+#   filter(TO_DATE(date_1,"YYYY-MM-DD HH24:MI:SS") > TO_DATE(SLOT_DATE)) %>%
+#   filter(ORG_OVBK_OPENINGS == 0) %>%
+#   filter(is.na(UNAVAILABLE_RSN_C)) %>%
+#   mutate(Appt.DateYear = TO_DATE(SLOT_DATE)) %>%
+#   group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, PROV_ID, PAT_ID, PAT_ENC_CSN_ID, Appt.Year, Appt.Month, Appt.DateYear) %>%
+#   summarise(total = n()) %>%
+#   collect()
+# 
+# visit_hours$DERIVED_STATUS_DESC <- access_raw$DERIVED_STATUS_DESC[match(trim(visit_hours$PAT_ENC_CSN_ID), trim((access_raw$PAT_ENC_CSN_ID)))]
+# visit_hours$APPT_LENGTH <- access_raw$APPT_LENGTH[match(visit_hours$PAT_ENC_CSN_ID, access_raw$PAT_ENC_CSN_ID)]
 
 
 ## Process Scheduled Hours -----------------------------------------------------
-scheduled_hours <- visit_hours %>%
-  filter(!is.na(DERIVED_STATUS_DESC)) %>%
-  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, Appt.Year, Appt.Month, Appt.DateYear) %>%
-  summarise(sched_min = sum(APPT_LENGTH))
+# scheduled_hours <- visit_hours %>%
+#   filter(!is.na(DERIVED_STATUS_DESC)) %>%
+#   group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, Appt.Year, Appt.Month, Appt.DateYear) %>%
+#   summarise(sched_min = sum(APPT_LENGTH))
 
+
+scheduled_hours <- access_raw_filtered %>%
+  ungroup() %>%
+  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME_WID, Appt.DateYear) %>%
+  summarise(sched_min = sum(APPT_LENGTH)) %>%
+  rename(PROV_NM_WID = PROV_NAME_WID)
+  
 
 ## Process Arrived Hours -------------------------------------------------------
-arrived_hours <- visit_hours %>%
+arrived_hours <- access_raw_filtered %>%
   filter(DERIVED_STATUS_DESC == "Arrived") %>%
-  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NM_WID, Appt.Year, Appt.Month, Appt.DateYear) %>%
-  summarise(arrived_min = sum(APPT_LENGTH))
+  group_by(DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME_WID, Appt.DateYear) %>%
+  summarise(arrived_min = sum(APPT_LENGTH)) %>%
+  rename(PROV_NM_WID = PROV_NAME_WID)
 
 
 # Merge Processed Hours --------------------------------------------------------
@@ -906,6 +946,10 @@ reactable(
 
 
 ```
+<br/>
+<br/>
+<br/>
+<br/>
 
 
 ### Unused Templates
