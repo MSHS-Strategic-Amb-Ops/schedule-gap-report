@@ -908,7 +908,7 @@ reactable(
 
 ### Unused Templates
 <span style='font-size: 20px; font-weight:bold; font-style:italic; color: #212070'>*This table shows a list of provider/resource templates currently open in Epic but with no scheduling activities.</span><br/>
-```{r Unused Templates,  echo = FALSE, warning = FALSE, message = FALSE}}
+```{r Unused Templates, echo = FALSE, warning = FALSE, message = FALSE}
 
 
 # Table Output -----------------------------------------------------------------
