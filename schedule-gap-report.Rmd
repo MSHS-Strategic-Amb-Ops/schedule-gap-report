@@ -542,7 +542,7 @@ hours_merged_day <- hours_merged %>%
   mutate(Appt.MonthYear = format(Appt.DateYear, "%m-%Y"),
          Appt.Day = format(Appt.DateYear, "%a")) %>%
   # mutate(arrived_hours = ifelse((!is.na(avail_hours) & !is.na(sched_hours) & is.na(arrived_hours)), 0, arrived_hours)) %>%
-  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME, NPI, Appt.Year, Appt.Month, Appt.MonthYear, Appt.Day) %>%
+  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME, NPI, VISIT_PROV_STAFF_RESOURCE_C, Appt.Year, Appt.Month, Appt.MonthYear, Appt.Day) %>%
   summarise(avg_avail_min = round(mean(avail_min, na.rm = T)),
             avg_sched_min = round(mean(sched_min, na.rm = T)),
             avg_arrived_min = round(mean(arrived_min, na.rm = T))) %>%
@@ -554,7 +554,7 @@ hours_merged_day <- hours_merged %>%
 hours_merged_month <- hours_merged %>%
   filter(empty_template == "No") %>%
   mutate(Appt.MonthYear = format(Appt.DateYear, "%m-%Y")) %>%
-  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME, NPI, Appt.Year, Appt.Month, Appt.MonthYear) %>%
+  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_NAME, DEPARTMENT_ID, PROV_NAME, NPI, VISIT_PROV_STAFF_RESOURCE_C, Appt.Year, Appt.Month, Appt.MonthYear) %>%
   summarise(avail_min = round(sum(avail_min, na.rm = T)),
             sched_min = round(sum(sched_min, na.rm = T)),
             arrived_min = round(sum(arrived_min, na.rm = T))) %>%
@@ -573,7 +573,7 @@ hours_merged_month <- hours_merged %>%
 
 hours_merged_day_output <- hours_merged_day %>%
   pivot_wider(names_from = Appt.Day,
-              values_from = 11:15)
+              values_from = 12:16)
   
 
 utilization_output <- left_join(hours_merged_month, hours_merged_day_output) 
@@ -583,7 +583,7 @@ utilization_output <- utilization_output %>%
          arrived_hours_week = round(arrived_hours/4,1))
 
 
-col_order <- c("SITE", "DEPT_SPECIALTY_NAME", "DEPARTMENT_NAME", "DEPARTMENT_ID", "PROV_NAME", "Appt.MonthYear", 
+col_order <- c("SITE", "DEPT_SPECIALTY_NAME", "DEPARTMENT_NAME", "DEPARTMENT_ID", "PROV_NAME", "NPI", "VISIT_PROV_STAFF_RESOURCE_C", "Appt.MonthYear", 
                "avail_min", "sched_min", "arrived_min", 
                "avail_hours", "sched_hours", "arrived_hours", 
                "avail_hours_week", "sched_hours_week", "arrived_hours_week",
@@ -638,13 +638,15 @@ knitr::include_graphics("Mount_Sinai_Logo_H.png")
 # Template Utilization Report
 *Report run date: `r report_run_date`*<br/>
 *Excludes Non-Epic Scheduling Sites: MSH-AMBULATORY CARE, NYEE*<br/>
+*Resource vs. Provider defined by Epic (VISIT_PROV_STAFF_RESOURCE_C)*<br/>
 _________________________________________________________________________________________________________________________________________________________
 <br/>
 <br/>
 
 
-## MSHS
-### Template Utilization 
+## MSHS {.tabset .tabset-fade .tabset-pills}
+### All Resources
+#### Template Utilization 
 <span style='font-size: 20px; font-weight:bold; font-style:italic; color: #212070'>*Excludes any templates with no scheduling activities; refer to "Unused Templates" section.</span><br/>
 ```{r Utilization by Month Table Output, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -969,6 +971,8 @@ reactable(
     ),
     
     DEPARTMENT_ID = colDef(show =F),
+    NPI = colDef(show =F),
+    VISIT_PROV_STAFF_RESOURCE_C = colDef(show =F),
     avail_min = colDef(show =F),
     sched_min = colDef(show =F),
     arrived_min = colDef(show =F),
@@ -1016,7 +1020,7 @@ reactable(
 <br/>
 
 
-### Template Capacity
+#### Template Capacity
 <span style='font-size: 20px; font-weight:bold; font-style:italic; color: #212070'>*Excludes any templates with no scheduling activities; refer to "Unused Templates" section.</span><br/>
 ```{r Template Capacity by Month Table Output, echo = FALSE, warning = FALSE, message = FALSE}
 
@@ -1281,6 +1285,8 @@ reactable(
     ),
 
     DEPARTMENT_ID = colDef(show =F),
+    NPI = colDef(show =F),
+    VISIT_PROV_STAFF_RESOURCE_C = colDef(show =F),
     avail_min = colDef(show =F),
     sched_min = colDef(show =F),
     arrived_min = colDef(show =F),
@@ -1323,6 +1329,692 @@ reactable(
 <br/>
 <br/>
 
+
+### Providers Only
+#### Template Utilization 
+<span style='font-size: 20px; font-weight:bold; font-style:italic; color: #212070'>*Excludes any templates with no scheduling activities; refer to "Unused Templates" section.</span><br/>
+```{r Provider Utilization by Month Table Output, echo = FALSE, warning = FALSE, message = FALSE}
+
+
+# Table Output -----------------------------------------------------------------
+htmltools::browsable(
+  tagList(
+    tags$button(
+      tagList(fontawesome::fa("download"), "Download Table"),
+      onclick = "Reactable.downloadDataCSV('util-prov-download-table', 'Template Utilization')"
+    ),
+
+# htmltools::browsable(
+#   tagList(
+#     div(tags$label("Group by", `for` = "cars-grouping-select")),
+#     tags$select(
+#       id = "cars-grouping-select",
+#       onchange = "Reactable.setGroupBy('cars-grouping-table', this.value ? [this.value] : [])",
+#       tags$option("None", value = c("Campus","Campus.Specialty.Group")),
+#       # tags$option("Test", value = c("Appt.Source.New","Campus.Specialty.Group")),
+#       # lapply(c("Campus", "Campus.Specialty.Group", "Appt.Source.New"), tags$option)
+#       lapply(c("Campus", "Campus.Specialty.Group", "Appt.Source.New"), tags$option)
+#     ),
+# 
+#     tags$hr("aria-hidden" = "true"),
+
+reactable(
+  utilization_output %>%
+    filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")) %>%
+    filter(VISIT_PROV_STAFF_RESOURCE_C == 1),
+  
+  elementId = "util-prov-download-table",
+  # elementId = "cars-grouping-table",
+  style = list(fontFamily = 'Calibri',
+                 fontSize = '14px'),
+    defaultColDef = colDef(align = "left",
+                           headerStyle = list(fontWeight = "Bold", fontSize = "14px"),
+                           headerClass = "bar-sort-header"),
+  
+    highlight = TRUE,
+    # filterable = TRUE,
+    pagination = FALSE,
+    height = 800,
+    wrap = TRUE,
+  searchable = TRUE,
+  
+  # rowStyle = function(index) {
+  #           if (index %in% c(10)) {
+  #             list(`border-top` = "2px solid rgb(184,184,184)",
+  #                  fontWeight = "Bold")
+  #           }
+  #         },
+
+  groupBy = c("SITE", "DEPT_SPECIALTY_NAME", "DEPARTMENT_NAME", "PROV_NAME"),
+
+  columnGroups = list(
+    # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " Visit Volume"), 
+    #          columns = c("Total", "new_perc"),
+    #          headerStyle = list(color = "#212070", fontSize = "16px")),
+    # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " No Show Rate"), 
+    #          columns = c("noShow_rate", "noShow_rate_Established", "noShow_rate_New"),
+    #          headerStyle = list(color = "#d80b8c", fontSize = "16px"))
+    colGroup(name = "", 
+             columns = c("SITE","DEPT_SPECIALTY_NAME","DEPARTMENT_NAME","PROV_NAME","Appt.MonthYear"), sticky = "left", 
+             headerStyle = list(fontSize = "16px")),
+    colGroup(name = "Available Hours", 
+             columns = c("avail_hours","avail_hours_week"),
+             headerStyle = list(color = "#7f7f7f", fontSize = "16px")),
+    colGroup(name = "Overall Utilization", 
+             columns = c("schedule_util","provider_util"),
+             headerStyle = list(color = "#212070", fontSize = "16px")),
+    colGroup(name = "Schedule Utiliation by Day", 
+             columns = c("avg_schedule_util_Mon", "avg_schedule_util_Tue", "avg_schedule_util_Wed", "avg_schedule_util_Thu", "avg_schedule_util_Fri"),
+             headerStyle = list(color = "#d80b8c", fontSize = "16px")),
+    colGroup(name = "Provider Utiliation by Day", 
+             columns = c("avg_provider_util_Mon", "avg_provider_util_Tue", "avg_provider_util_Wed", "avg_provider_util_Thu", "avg_provider_util_Fri"),
+             headerStyle = list(color = "#00aeef", fontSize = "16px"))
+    ),
+
+  columns = list(
+
+    SITE = colDef(
+      # footer = "Total",
+      name = "Site",
+      minWidth = 180),
+
+    DEPT_SPECIALTY_NAME = colDef(
+      name = "Specialty",
+      minWidth = 180),
+    
+    DEPARTMENT_NAME = colDef(
+      name = "Department",
+      minWidth = 230),
+    
+    PROV_NAME = colDef(
+      name = "Provider",
+      minWidth = 180),
+    
+    Appt.MonthYear = colDef(
+      name = "Month",
+      minWidth = 90),
+    
+    avail_hours = colDef(
+      name = "Available Hours",
+      maxWidth = 130,
+      headerStyle = list(background = "#7f7f7f", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avail_hours_week = colDef(
+      name = "Available Hours per Week",
+      maxWidth = 130,
+      headerStyle = list(background = "#7f7f7f", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'mean',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+
+    schedule_util = colDef(
+      name = "Schedule Utilization",
+      maxWidth = 130,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavail_min = 0
+        let totalsched_min = 0
+        rows.forEach(function(row) {
+          totalavail_min += row['avail_min']
+          totalsched_min += row['sched_min']
+        })
+        return (totalsched_min) / totalavail_min || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    provider_util = colDef(
+      name = "Provider Utilization",
+      maxWidth = 130,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavail_min = 0
+        let totalarrived_min = 0
+        rows.forEach(function(row) {
+          totalavail_min += row['avail_min']
+          totalarrived_min += row['arrived_min']
+        })
+        return (totalarrived_min) / totalavail_min || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+
+    avg_schedule_util_Mon = colDef(
+      name = "Mon",
+      maxWidth = 60,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Mon = 0
+        let totalavg_sched_min_Mon = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Mon += row['avg_avail_min_Mon']
+          totalavg_sched_min_Mon += row['avg_sched_min_Mon']
+        })
+        return (totalavg_sched_min_Mon) / totalavg_avail_min_Mon || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_schedule_util_Tue = colDef(
+      name = "Tue",
+      maxWidth = 60,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Tue = 0
+        let totalavg_sched_min_Tue = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Tue += row['avg_avail_min_Tue']
+          totalavg_sched_min_Tue += row['avg_sched_min_Tue']
+        })
+        return (totalavg_sched_min_Tue) / totalavg_avail_min_Tue || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_schedule_util_Wed = colDef(
+      name = "Wed",
+      maxWidth = 60,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Wed = 0
+        let totalavg_sched_min_Wed = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Wed += row['avg_avail_min_Wed']
+          totalavg_sched_min_Wed += row['avg_sched_min_Wed']
+        })
+        return (totalavg_sched_min_Wed) / totalavg_avail_min_Wed || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_schedule_util_Thu = colDef(
+      name = "Thu",
+      maxWidth = 60,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Thu = 0
+        let totalavg_sched_min_Thu = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Thu += row['avg_avail_min_Thu']
+          totalavg_sched_min_Thu += row['avg_sched_min_Thu']
+        })
+        return (totalavg_sched_min_Thu) / totalavg_avail_min_Thu || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_schedule_util_Fri = colDef(
+      name = "Fri",
+      maxWidth = 60,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Fri = 0
+        let totalavg_sched_min_Fri = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Fri += row['avg_avail_min_Fri']
+          totalavg_sched_min_Fri += row['avg_sched_min_Fri']
+        })
+        return (totalavg_sched_min_Fri) / totalavg_avail_min_Fri || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_provider_util_Mon = colDef(
+      name = "Mon",
+      maxWidth = 60,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Mon = 0
+        let totalavg_arrived_min_Mon = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Mon += row['avg_avail_min_Mon']
+          totalavg_arrived_min_Mon += row['avg_arrived_min_Mon']
+        })
+        return (totalavg_arrived_min_Mon) / totalavg_avail_min_Mon || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_provider_util_Tue = colDef(
+      name = "Tue",
+      maxWidth = 60,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Tue = 0
+        let totalavg_arrived_min_Tue = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Tue += row['avg_avail_min_Tue']
+          totalavg_arrived_min_Tue += row['avg_arrived_min_Tue']
+        })
+        return (totalavg_arrived_min_Tue) / totalavg_avail_min_Tue || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_provider_util_Wed = colDef(
+      name = "Wed",
+      maxWidth = 60,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Wed = 0
+        let totalavg_arrived_min_Wed = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Wed += row['avg_avail_min_Wed']
+          totalavg_arrived_min_Wed += row['avg_arrived_min_Wed']
+        })
+        return (totalavg_arrived_min_Wed) / totalavg_avail_min_Wed || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_provider_util_Thu = colDef(
+      name = "Thu",
+      maxWidth = 60,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Thu = 0
+        let totalavg_arrived_min_Thu = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Thu += row['avg_avail_min_Thu']
+          totalavg_arrived_min_Thu += row['avg_arrived_min_Thu']
+        })
+        return (totalavg_arrived_min_Thu) / totalavg_avail_min_Thu || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_provider_util_Fri = colDef(
+      name = "Fri",
+      maxWidth = 60,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = JS("function(values, rows) {
+        let totalavg_avail_min_Fri = 0
+        let totalavg_arrived_min_Fri = 0
+        rows.forEach(function(row) {
+          totalavg_avail_min_Fri += row['avg_avail_min_Fri']
+          totalavg_arrived_min_Fri += row['avg_arrived_min_Fri']
+        })
+        return (totalavg_arrived_min_Fri) / totalavg_avail_min_Fri || '-'
+      }"),
+      format = colFormat(percent = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    DEPARTMENT_ID = colDef(show =F),
+    NPI = colDef(show =F),
+    VISIT_PROV_STAFF_RESOURCE_C = colDef(show =F),
+    avail_min = colDef(show =F),
+    sched_min = colDef(show =F),
+    arrived_min = colDef(show =F),
+    sched_hours = colDef(show =F),
+    arrived_hours = colDef(show =F),
+    sched_hours_week = colDef(show =F),
+    arrived_hours_week = colDef(show =F),
+    avg_avail_min_Mon = colDef(show =F),
+    avg_avail_min_Tue = colDef(show =F),
+    avg_avail_min_Wed = colDef(show =F),
+    avg_avail_min_Thu = colDef(show =F),
+    avg_avail_min_Fri = colDef(show =F),
+    avg_avail_min_Sat = colDef(show =F),
+    avg_avail_min_Sun = colDef(show =F),
+    avg_sched_min_Mon = colDef(show =F),
+    avg_sched_min_Tue = colDef(show =F),
+    avg_sched_min_Wed = colDef(show =F),
+    avg_sched_min_Thu = colDef(show =F),
+    avg_sched_min_Fri = colDef(show =F),
+    avg_sched_min_Sat = colDef(show =F),
+    avg_sched_min_Sun = colDef(show =F),
+    avg_arrived_min_Mon = colDef(show =F),
+    avg_arrived_min_Tue = colDef(show =F),
+    avg_arrived_min_Wed = colDef(show =F),
+    avg_arrived_min_Thu = colDef(show =F),
+    avg_arrived_min_Fri = colDef(show =F),
+    avg_arrived_min_Sat = colDef(show =F),
+    avg_arrived_min_Sun = colDef(show =F),
+    avg_schedule_util_Sat = colDef(show =F),
+    avg_schedule_util_Sun = colDef(show =F),
+    avg_provider_util_Sat = colDef(show =F),
+    avg_provider_util_Sun = colDef(show =F)
+   
+  ) # Close Columns
+
+  ) # Close Reactable
+
+ )
+)
+
+
+```
+<br/>
+<br/>
+<br/>
+
+
+#### Template Capacity
+<span style='font-size: 20px; font-weight:bold; font-style:italic; color: #212070'>*Excludes any templates with no scheduling activities; refer to "Unused Templates" section.</span><br/>
+```{r Provider Template Capacity by Month Table Output, echo = FALSE, warning = FALSE, message = FALSE}
+
+
+# Table Output -----------------------------------------------------------------
+htmltools::browsable(
+  tagList(
+    tags$button(
+      tagList(fontawesome::fa("download"), "Download Table"),
+      onclick = "Reactable.downloadDataCSV('capacity-prov-download-table', 'Template Utilization')"
+    ),
+
+# htmltools::browsable(
+#   tagList(
+#     div(tags$label("Group by", `for` = "cars-grouping-select")),
+#     tags$select(
+#       id = "cars-grouping-select",
+#       onchange = "Reactable.setGroupBy('cars-grouping-table', this.value ? [this.value] : [])",
+#       tags$option("None", value = c("Campus","Campus.Specialty.Group")),
+#       # tags$option("Test", value = c("Appt.Source.New","Campus.Specialty.Group")),
+#       # lapply(c("Campus", "Campus.Specialty.Group", "Appt.Source.New"), tags$option)
+#       lapply(c("Campus", "Campus.Specialty.Group", "Appt.Source.New"), tags$option)
+#     ),
+#
+#     tags$hr("aria-hidden" = "true"),
+
+reactable(
+  utilization_output %>%
+    filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")) %>%
+    filter(VISIT_PROV_STAFF_RESOURCE_C == 1),
+
+  elementId = "capacity-prov-download-table",
+  # elementId = "cars-grouping-table",
+  style = list(fontFamily = 'Calibri',
+                 fontSize = '14px'),
+    defaultColDef = colDef(align = "left",
+                           headerStyle = list(fontWeight = "Bold", fontSize = "14px"),
+                           headerClass = "bar-sort-header"),
+
+    highlight = TRUE,
+    # filterable = TRUE,
+    pagination = FALSE,
+    height = 800,
+    wrap = TRUE,
+  searchable = TRUE,
+
+  # rowStyle = function(index) {
+  #           if (index %in% c(10)) {
+  #             list(`border-top` = "2px solid rgb(184,184,184)",
+  #                  fontWeight = "Bold")
+  #           }
+  #         },
+
+  groupBy = c("SITE", "DEPT_SPECIALTY_NAME", "DEPARTMENT_NAME", "PROV_NAME"),
+
+  columnGroups = list(
+    # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " Visit Volume"),
+    #          columns = c("Total", "new_perc"),
+    #          headerStyle = list(color = "#212070", fontSize = "16px")),
+    # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " No Show Rate"),
+    #          columns = c("noShow_rate", "noShow_rate_Established", "noShow_rate_New"),
+    #          headerStyle = list(color = "#d80b8c", fontSize = "16px"))
+    colGroup(name = "",
+             columns = c("SITE","DEPT_SPECIALTY_NAME","DEPARTMENT_NAME","PROV_NAME","Appt.MonthYear"), sticky = "left",
+             headerStyle = list(fontSize = "16px")),
+    colGroup(name = "Available Hours",
+             columns = c("avail_hours_week", "sched_hours_week", "arrived_hours_week"),
+             headerStyle = list(color = "#7f7f7f", fontSize = "16px")),
+    colGroup(name = "Available Minutes by Day",
+             columns = c("avg_avail_min_Mon","avg_avail_min_Tue","avg_avail_min_Wed","avg_avail_min_Thu","avg_avail_min_Fri"),
+             headerStyle = list(color = "#212070", fontSize = "16px")),
+    colGroup(name = "Scheduled Minutes by Day",
+             columns = c("avg_sched_min_Mon","avg_sched_min_Tue","avg_sched_min_Wed","avg_sched_min_Thu","avg_sched_min_Fri"),
+             headerStyle = list(color = "#d80b8c", fontSize = "16px")),
+    colGroup(name = "Arrived Minutes by Day",
+             columns = c("avg_arrived_min_Mon","avg_arrived_min_Tue","avg_arrived_min_Wed","avg_arrived_min_Thu","avg_arrived_min_Fri"),
+             headerStyle = list(color = "#00aeef", fontSize = "16px"))
+    ),
+
+  columns = list(
+
+    SITE = colDef(
+      # footer = "Total",
+      name = "Site",
+      minWidth = 180),
+
+    DEPT_SPECIALTY_NAME = colDef(
+      name = "Specialty",
+      minWidth = 180),
+
+    DEPARTMENT_NAME = colDef(
+      name = "Department",
+      minWidth = 230),
+
+    PROV_NAME = colDef(
+      name = "Provider",
+      minWidth = 180),
+
+    Appt.MonthYear = colDef(
+      name = "Month",
+      minWidth = 90),
+
+    avail_hours_week = colDef(
+      name = "Available Hours per Week",
+      maxWidth = 130,
+      headerStyle = list(background = "#7f7f7f", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    sched_hours_week = colDef(
+      name = "Scheduled Hours per Week",
+      maxWidth = 130,
+      headerStyle = list(background = "#7f7f7f", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    arrived_hours_week = colDef(
+      name = "Arrived Hours per Week",
+      maxWidth = 130,
+      headerStyle = list(background = "#7f7f7f", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+
+    avg_avail_min_Mon = colDef(
+      name = "Mon",
+      maxWidth = 100,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_avail_min_Tue = colDef(
+      name = "Tue",
+      maxWidth = 100,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_avail_min_Wed = colDef(
+      name = "Wed",
+      maxWidth = 100,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_avail_min_Thu = colDef(
+      name = "Thu",
+      maxWidth = 100,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_avail_min_Fri = colDef(
+      name = "Fri",
+      maxWidth = 100,
+      headerStyle = list(background = "#212070", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+
+    avg_sched_min_Mon = colDef(
+      name = "Mon",
+      maxWidth = 100,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_sched_min_Tue = colDef(
+      name = "Tue",
+      maxWidth = 100,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_sched_min_Wed = colDef(
+      name = "Wed",
+      maxWidth = 100,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_sched_min_Thu = colDef(
+      name = "Thu",
+      maxWidth = 100,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_sched_min_Fri = colDef(
+      name = "Fri",
+      maxWidth = 100,
+      headerStyle = list(background = "#d80b8c", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_arrived_min_Mon = colDef(
+      name = "Mon",
+      maxWidth = 100,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_arrived_min_Tue = colDef(
+      name = "Tue",
+      maxWidth = 100,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_arrived_min_Wed = colDef(
+      name = "Wed",
+      maxWidth = 100,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_arrived_min_Thu = colDef(
+      name = "Thu",
+      maxWidth = 100,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+    
+    avg_arrived_min_Fri = colDef(
+      name = "Fri",
+      maxWidth = 100,
+      headerStyle = list(background = "#00aeef", color = "white", fontWeight = "Bold", fontSize = "14px"),
+      aggregate = 'sum',
+      format = colFormat(separators = TRUE, digits = 0),
+      style = list(borderLeft = "1.5px solid rgb(230, 230, 230)")
+    ),
+
+    DEPARTMENT_ID = colDef(show =F),
+    NPI = colDef(show =F),
+    VISIT_PROV_STAFF_RESOURCE_C = colDef(show =F),
+    avail_min = colDef(show =F),
+    sched_min = colDef(show =F),
+    arrived_min = colDef(show =F),
+    avail_hours = colDef(show =F),
+    sched_hours = colDef(show =F),
+    arrived_hours = colDef(show =F),
+    schedule_util = colDef(show =F),
+    provider_util = colDef(show =F),
+    avg_avail_min_Sat = colDef(show =F),
+    avg_avail_min_Sun = colDef(show =F),
+    avg_sched_min_Sat = colDef(show =F),
+    avg_sched_min_Sun = colDef(show =F),
+    avg_arrived_min_Sat = colDef(show =F),
+    avg_arrived_min_Sun = colDef(show =F),
+    avg_schedule_util_Mon = colDef(show =F),
+    avg_schedule_util_Tue = colDef(show =F),
+    avg_schedule_util_Wed = colDef(show =F),
+    avg_schedule_util_Thu = colDef(show =F),
+    avg_schedule_util_Fri = colDef(show =F),
+    avg_schedule_util_Sat = colDef(show =F),
+    avg_schedule_util_Sun = colDef(show =F),
+    avg_provider_util_Mon = colDef(show =F),
+    avg_provider_util_Tue = colDef(show =F),
+    avg_provider_util_Wed = colDef(show =F),
+    avg_provider_util_Thu = colDef(show =F),
+    avg_provider_util_Fri = colDef(show =F),
+    avg_provider_util_Sat = colDef(show =F),
+    avg_provider_util_Sun = colDef(show =F)
+
+  ) # Close Columns
+
+  ) # Close Reactable
+
+ )
+)
+
+
+```
+<br/>
+<br/>
+<br/>
 
 
 ### Unused Templates
@@ -1437,6 +2129,41 @@ reactable(
 )
 
 
+
+```
+
+
+
+```{r Gap Analysis, echo = FALSE, warning = FALSE, message = FALSE}
+
+# outpatient_cFTE <- read_excel("outpatient_cFTE_Q1 2023.xlsx")
+# 
+# 
+# hours_summary <- utilization_output %>%
+#   group_by(PROV_NAME, NPI, VISIT_PROV_STAFF_RESOURCE_C, Appt.MonthYear) %>%
+#   summarise(avail_min = sum(avail_min, na.rm = T),
+#             sched_min = sum(sched_min , na.rm = T),
+#             arrived_min = sum(arrived_min, na.rm = T)) %>%
+#   mutate(schedule_util = round(sched_min/avail_min,2),
+#          provider_util = round(arrived_min/avail_min,2)) %>%
+#   mutate(NPI = as.numeric(NPI))
+# 
+# 
+# gap_analysis <- left_join(hours_summary, outpatient_cFTE, by = c("NPI"))
+# 
+# 
+# gap_analysis <- gap_analysis %>%
+#   mutate(expected_min = (40*Outpatient)*60,
+#          expected_avail_min_variance = expected_min - avail_min,
+#          expected_avail_hour_variance = round(expected_avail_min_variance/60,1)) 
+# 
+# gap_col_order <- c("Master Dept", "Site", "Physician", "NPI", "Total FTE", "2023 Reported CFTE", 
+#                    "Outpatient Practice Locations", "Comments / Job Description", 
+#                    "Outpatient", "OR/Procedure","Inpatient","Other",
+#                    "avail_hour", "sched_min", "arrived_min", "expected_min", "expected_avail_min_variance", "expected_avail_hour_variance",
+#                    "schedule_util", "provider_util")
+# 
+# gap_analysis <- gap_analysis[,gap_col_order]
 
 ```
 
