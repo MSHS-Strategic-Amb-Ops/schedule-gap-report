@@ -758,7 +758,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
   
@@ -1168,7 +1168,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
 
@@ -1514,7 +1514,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
 
@@ -1919,7 +1919,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
   
@@ -2330,7 +2330,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
 
@@ -2677,7 +2677,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
 
@@ -3080,7 +3080,7 @@ reactable(
     highlight = TRUE,
     # filterable = TRUE,
     pagination = FALSE,
-    height = 700,
+    height = 600,
     wrap = TRUE,
   searchable = TRUE,
   
