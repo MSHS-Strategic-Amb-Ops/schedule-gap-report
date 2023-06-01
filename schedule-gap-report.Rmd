@@ -358,11 +358,11 @@ coverage_tbl <- tbl(conn2, "V_PAT_ENC_COVERAGE")
 ```{r Department Mapping, echo = FALSE, warning = FALSE, message = FALSE}
 
 # Department and Provider Mapping ----------------------------------------------
-dept_mapping <- access_raw_tbl %>%
-  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_ID, DEPARTMENT_NAME) %>%
-  summarise(total = n()) %>%
-  collect() %>%
-  dplyr::select(-total)
+# dept_mapping <- access_raw_tbl %>%
+#   group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_ID, DEPARTMENT_NAME) %>%
+#   summarise(total = n()) %>%
+#   collect() %>%
+#   dplyr::select(-total)
 
 ```
 
@@ -380,6 +380,13 @@ access_raw <- access_raw_tbl %>%
                 Appt.Year, Appt.Month, Appt.DateYear) %>%
   collect() %>%
   mutate(PROV_NAME = trimws(gsub("\\[.*?\\]", "", PROV_NAME_WID))) 
+
+
+dept_mapping <- access_raw %>%
+  group_by(SITE, DEPT_SPECIALTY_NAME, DEPARTMENT_ID, DEPARTMENT_NAME) %>%
+  summarise(total = n()) %>%
+  collect() %>%
+  dplyr::select(-total)
 
 ```
 
