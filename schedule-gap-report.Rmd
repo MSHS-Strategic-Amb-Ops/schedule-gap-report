@@ -1469,7 +1469,7 @@ reactable(
 
   ) # Close Reactable
 
- )
+ # )
 # )
 
 
@@ -1872,7 +1872,7 @@ reactable(
 
   ) # Close Reactable
 
- )
+ # )
 # )
 
 
@@ -2284,7 +2284,7 @@ reactable(
 
   ) # Close Reactable
 
- )
+ # )
 # )
 
 
@@ -2631,7 +2631,7 @@ reactable(
 
   ) # Close Reactable
 
- )
+ # )
 # )
 
 
@@ -3035,7 +3035,7 @@ reactable(
 
   ) # Close Reactable
 
- )
+ # )
 # )
 
 
