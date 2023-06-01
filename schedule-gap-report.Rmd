@@ -1139,12 +1139,12 @@ reactable(
 
 
 # Table Output -----------------------------------------------------------------
-htmltools::browsable(
-  tagList(
-    tags$button(
-      tagList(fontawesome::fa("download"), "Download Table"),
-      onclick = "Reactable.downloadDataCSV('capacity-download-table', 'Template Utilization')"
-    ),
+# htmltools::browsable(
+#   tagList(
+#     tags$button(
+#       tagList(fontawesome::fa("download"), "Download Table"),
+#       onclick = "Reactable.downloadDataCSV('capacity-download-table', 'Template Utilization')"
+#     ),
 
 # htmltools::browsable(
 #   tagList(
@@ -1164,7 +1164,7 @@ reactable(
   utilization_output %>%
     filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")),
 
-  elementId = "capacity-download-table",
+  # elementId = "capacity-download-table",
   # elementId = "cars-grouping-table",
   style = list(fontFamily = 'Calibri',
                  fontSize = '14px'),
@@ -1470,7 +1470,7 @@ reactable(
   ) # Close Reactable
 
  )
-)
+# )
 
 
 ```
@@ -1485,12 +1485,12 @@ reactable(
 
 
 # Table Output -----------------------------------------------------------------
-htmltools::browsable(
-  tagList(
-    tags$button(
-      tagList(fontawesome::fa("download"), "Download Table"),
-      onclick = "Reactable.downloadDataCSV('other-download-table', 'Template Utilization')"
-    ),
+# htmltools::browsable(
+#   tagList(
+#     tags$button(
+#       tagList(fontawesome::fa("download"), "Download Table"),
+#       onclick = "Reactable.downloadDataCSV('other-download-table', 'Template Utilization')"
+#     ),
 
 # htmltools::browsable(
 #   tagList(
@@ -1873,7 +1873,7 @@ reactable(
   ) # Close Reactable
 
  )
-)
+# )
 
 
 ```
@@ -1889,12 +1889,12 @@ reactable(
 
 
 # Table Output -----------------------------------------------------------------
-htmltools::browsable(
-  tagList(
-    tags$button(
-      tagList(fontawesome::fa("download"), "Download Table"),
-      onclick = "Reactable.downloadDataCSV('util-prov-download-table', 'Template Utilization')"
-    ),
+# htmltools::browsable(
+#   tagList(
+#     tags$button(
+#       tagList(fontawesome::fa("download"), "Download Table"),
+#       onclick = "Reactable.downloadDataCSV('util-prov-download-table', 'Template Utilization')"
+#     ),
 
 # htmltools::browsable(
 #   tagList(
@@ -1915,7 +1915,7 @@ reactable(
     filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")) %>%
     filter(VISIT_PROV_STAFF_RESOURCE_C == 1),
   
-  elementId = "util-prov-download-table",
+  # elementId = "util-prov-download-table",
   # elementId = "cars-grouping-table",
   style = list(fontFamily = 'Calibri',
                  fontSize = '14px'),
@@ -2285,7 +2285,7 @@ reactable(
   ) # Close Reactable
 
  )
-)
+# )
 
 
 ```
@@ -2300,12 +2300,12 @@ reactable(
 
 
 # Table Output -----------------------------------------------------------------
-htmltools::browsable(
-  tagList(
-    tags$button(
-      tagList(fontawesome::fa("download"), "Download Table"),
-      onclick = "Reactable.downloadDataCSV('capacity-prov-download-table', 'Template Utilization')"
-    ),
+# htmltools::browsable(
+#   tagList(
+#     tags$button(
+#       tagList(fontawesome::fa("download"), "Download Table"),
+#       onclick = "Reactable.downloadDataCSV('capacity-prov-download-table', 'Template Utilization')"
+#     ),
 
 # htmltools::browsable(
 #   tagList(
@@ -2326,7 +2326,7 @@ reactable(
     filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")) %>%
     filter(VISIT_PROV_STAFF_RESOURCE_C == 1),
 
-  elementId = "capacity-prov-download-table",
+  # elementId = "capacity-prov-download-table",
   # elementId = "cars-grouping-table",
   style = list(fontFamily = 'Calibri',
                  fontSize = '14px'),
@@ -2632,7 +2632,7 @@ reactable(
   ) # Close Reactable
 
  )
-)
+# )
 
 
 ```
@@ -2647,12 +2647,12 @@ reactable(
 
 
 # Table Output -----------------------------------------------------------------
-htmltools::browsable(
-  tagList(
-    tags$button(
-      tagList(fontawesome::fa("download"), "Download Table"),
-      onclick = "Reactable.downloadDataCSV('other-prov-download-table', 'Template Utilization')"
-    ),
+# htmltools::browsable(
+#   tagList(
+#     tags$button(
+#       tagList(fontawesome::fa("download"), "Download Table"),
+#       onclick = "Reactable.downloadDataCSV('other-prov-download-table', 'Template Utilization')"
+#     ),
 
 # htmltools::browsable(
 #   tagList(
@@ -2673,7 +2673,7 @@ reactable(
     filter(SITE %!in% c("MS NOW", "MSH- AMBULATORY CARE", "OTHER", "NYEE")) %>%
     filter(VISIT_PROV_STAFF_RESOURCE_C == 1),
 
-  elementId = "other-prov-download-table",
+  # elementId = "other-prov-download-table",
   # elementId = "cars-grouping-table",
   style = list(fontFamily = 'Calibri',
                  fontSize = '14px'),
@@ -3036,7 +3036,7 @@ reactable(
   ) # Close Reactable
 
  )
-)
+# )
 
 
 ```
