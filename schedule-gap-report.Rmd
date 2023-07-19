@@ -1536,7 +1536,6 @@ reactable(
 
   columnGroups = list(
     # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " Visit Volume"),
-    #          columns = c("Total", "new_perc"),
     #          headerStyle = list(color = "#212070", fontSize = "16px")),
     # colGroup(name = paste0(format(as.Date(start_date), "%b"),"-",format(as.Date(end_date), "%b %Y"), " No Show Rate"),
     #          columns = c("noShow_rate", "noShow_rate_Established", "noShow_rate_New"),
@@ -3164,34 +3163,41 @@ reactable(
 
 ```{r Gap Analysis, echo = FALSE, warning = FALSE, message = FALSE}
 
-outpatient_cFTE <- read_excel("outpatient_cFTE_Q1 2023.xlsx")
-
-
-hours_summary <- utilization_output %>%
-  group_by(PROV_NAME, NPI, VISIT_PROV_STAFF_RESOURCE_C, Appt.MonthYear) %>%
-  summarise(avail_min = sum(avail_min, na.rm = T),
-            sched_min = sum(sched_min , na.rm = T),
-            arrived_min = sum(arrived_min, na.rm = T)) %>%
-  mutate(schedule_util = round(sched_min/avail_min,2),
-         provider_util = round(arrived_min/avail_min,2)) %>%
-  mutate(NPI = as.numeric(NPI))
-
-
-gap_analysis <- left_join(hours_summary, outpatient_cFTE, by = c("NPI"))
-
-
-gap_analysis <- gap_analysis %>%
-  mutate(expected_min = (40*Outpatient)*60,
-         expected_avail_min_variance = expected_min - avail_min,
-         expected_avail_hour_variance = round(expected_avail_min_variance/60,1))
-
-gap_col_order <- c("Master Dept", "Site", "Physician", "NPI", "Total FTE", "2023 Reported CFTE",
-                   "Outpatient Practice Locations", "Comments / Job Description",
-                   "Outpatient", "OR/Procedure","Inpatient","Other",
-                   "avail_min", "sched_min", "arrived_min", "expected_min", "expected_avail_min_variance", "expected_avail_hour_variance",
-                   "schedule_util", "provider_util")
-
-gap_analysis <- gap_analysis[gap_col_order]
+# outpatient_cFTE <- read_excel("outpatient_cFTE_Q1 2023.xlsx")
+# 
+# 
+# hours_summary <- utilization_output %>%
+#   group_by(PROV_NAME, NPI, VISIT_PROV_STAFF_RESOURCE_C, Appt.MonthYear) %>%
+#   summarise(avail_min = sum(avail_min, na.rm = T),
+#             sched_min = sum(sched_min , na.rm = T),
+#             arrived_min = sum(arrived_min, na.rm = T)) %>%
+#   mutate(schedule_util = round(sched_min/avail_min,2),
+#          provider_util = round(arrived_min/avail_min,2)) %>%
+#   mutate(NPI = as.numeric(NPI))
+# 
+# 
+# gap_analysis <- left_join(hours_summary, outpatient_cFTE, by = c("NPI"))
+# 
+# 
+# gap_analysis <- gap_analysis %>%
+#   mutate(Outpatient = as.numeric(Outpatient)) %>%
+#   mutate(expected_min = (40*Outpatient)*4*60,
+#          expected_avail_min_variance = avail_min - expected_min,
+#          expected_avail_hour_variance = round(expected_avail_min_variance/60,1))
+# 
+# gap_col_order <- c("Master Dept", "Site", "Physician", "NPI", "Total FTE", "2023 Reported CFTE",
+#                    "Outpatient Practice Locations", "Comments / Job Description",
+#                    "Outpatient", "OR/Procedure","Inpatient","Other",
+#                    "Appt.MonthYear",
+#                    "avail_min", "sched_min", "arrived_min", "expected_min", "expected_avail_min_variance", "expected_avail_hour_variance",
+#                    "schedule_util", "provider_util")
+# 
+# gap_analysis <- gap_analysis[gap_col_order]
+# 
+# gap_analysis_filtered <- gap_analysis %>%
+#   filter(!is.na(`Master Dept`))
+# 
+# write.xlsx(gap_analysis_filtered, "Gap Analysis.xlsx")
 
 ```
 
